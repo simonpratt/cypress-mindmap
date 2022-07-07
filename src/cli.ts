@@ -3,6 +3,21 @@ import { Statement } from 'estree';
 import ts from 'typescript';
 import fs from 'fs';
 import glob from 'glob';
+import yargs from 'yargs';
+import { hideBin } from 'yargs/helpers';
+
+const argv = yargs(hideBin(process.argv))
+  .usage('Run against a cypress test directory to generate a mindmap of that directory')
+  .options({
+    spec: {
+      alias: 's',
+      description: 'subset of tests that are elegible for running',
+      requiresArg: false,
+      required: true,
+      type: 'string',
+    },
+  })
+  .default('spec', '**/*.cy.ts').argv;
 
 interface TestStructure {
   key: string;
@@ -103,6 +118,13 @@ const findMatchingFiles = (pattern: string): string[] => {
 
 const parseMatchingFiles = (pattern: string) => {
   const files = findMatchingFiles(pattern);
+
+  if (!files.length) {
+    throw new Error(`No files were found matching pattern '${pattern}'`);
+  }
+
+  console.log('files found', files)
+
   const individualTestStructures = files.map(parseFileToStructure);
   const flattened = individualTestStructures.reduce((prev, curr) => [...prev, ...curr], []);
   const combined = combineTestStructures(flattened);
@@ -110,8 +132,15 @@ const parseMatchingFiles = (pattern: string) => {
   console.log(combined);
 };
 
-const run = () => {
-  parseMatchingFiles('./mock/**/*.test.ts');
+const run = async () => {
+  const spec = (await argv).spec;
+
+  if (!spec) {
+    throw new Error('spec must be provided');
+  }
+
+  parseMatchingFiles(spec);
+  // './mock/**/*.test.ts'
 };
 
 export default run;
