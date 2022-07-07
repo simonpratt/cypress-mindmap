@@ -61,43 +61,18 @@ const unwindDescribeBlock = (node: Statement): TestStructure => {
   };
 };
 
-// const extractTestCases = (nodes: Statement[]): string[] => {
-//   const testCases = nodes.filter(isItNode);
-//   return testCases.map(getFirstArgumentValue);
-// }
-
 const extractStructureFromProgram = (nodes: Statement[]): TestStructure[] => {
   const structure = nodes.filter(isDescribeNode).map(unwindDescribeBlock);
   return structure;
 };
 
 const parseFileToStructure = (filePath: string): TestStructure[] => {
-  console.log('parsing', filePath);
   const fileContents = fs.readFileSync(filePath).toLocaleString();
   const transpiledContents = ts.transpile(fileContents);
   const program = parseModule(transpiledContents);
-  // const fileContents = fs.readFileSync(filePath, 'utf8');
 
-  // console.log('Contents', fileContents);
-
-  // function isDescribe(node: any) {
-  //   return node.type === 'CallExpression' && node.callee.type === 'Identifier' && node.callee.name === 'describe';
-  // }
-
-  // const node = ts.createSourceFile(
-  //   'x.ts',   // fileName
-  //   fileContents,
-  //   ts.ScriptTarget.Latest // langugeVersion
-  // );
   const structure = extractStructureFromProgram(program.body as Statement[]);
   return structure;
-
-  // return [];
-
-  // console.log('PARSED');
-  // console.log(structure);
-
-  // console.log(JSON.stringify(testFile));
 };
 
 const combineTestStructures = (structures: TestStructure[]): TestStructure[] => {
@@ -132,13 +107,11 @@ const parseMatchingFiles = (pattern: string) => {
   const flattened = individualTestStructures.reduce((prev, curr) => [...prev, ...curr], []);
   const combined = combineTestStructures(flattened);
 
-  console.log(JSON.stringify(combined));
-
-  // const combinedtestStructure = console.log(individualTestStructures);
+  console.log(combined);
 };
 
-parseMatchingFiles('./mock/**/*.test.ts');
-// parseMatchingFiles('/Users/simon/dev/repo/easy-choice/easy-choice-cypress/cypress/e2e/**/*.cy.ts');
+const run = () => {
+  parseMatchingFiles('./mock/**/*.test.ts');
+};
 
-// expression":{
-//   "type":"CallExpression"
+export default run;

@@ -2,20 +2,27 @@
   "name": "@dtdot/cypress-mindmap",
   "version": "0.0.1",
   "description": "A mindmap generator for cypress test suites",
-  "main": "build/index.js",
   "author": "Simon Pratt <19920260+simonpratt@users.noreply.github.com>",
-  "license": "ISC",
+  "main": "bin/cli",
+  "license": "MIT",
+  "type": "module",
+  "bin": {
+    "cypress-mindmap": "bin/cli.js"
+  },
   "files": [
-    "build"
+    "bin/*",
+    "dist/*"
   ],
   "scripts": {
-    "start": "node test",
+    "start": "tsc && node dist/cli.js",
+    "build": "tsc",
     "lint": "eslint 'src/**/*.{js,ts}'"
   },
   "dependencies": {
     "esprima": "^4.0.1",
     "glob": "^8.0.3",
-    "mocha": "^10.0.0"
+    "mocha": "^10.0.0",
+    "typescript": "^4.7.4"
   },
   "devDependencies": {
     "@types/esprima": "^4.0.3",
@@ -28,7 +35,6 @@
     "eslint-config-prettier": "^8.5.0",
     "eslint-plugin-prettier": "^4.0.0",
     "prettier": "^2.6.1",
-    "ts-node": "^10.8.2",
-    "typescript": "^4.7.4"
+    "ts-node": "^10.8.2"
   }
 }
