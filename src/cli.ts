@@ -129,6 +129,7 @@ const parseMatchingFiles = (pattern: string) => {
   const flattened = individualTestStructures.reduce((prev, curr) => [...prev, ...curr], []);
   const combined = combineTestStructures(flattened);
 
+  fs.writeFileSync('__temp_structure.json', JSON.stringify(combined));
   console.log(combined);
 };
 
