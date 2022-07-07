@@ -123,7 +123,7 @@ const parseMatchingFiles = (pattern: string) => {
     throw new Error(`No files were found matching pattern '${pattern}'`);
   }
 
-  console.log('files found', files)
+  console.log('files found', files);
 
   const individualTestStructures = files.map(parseFileToStructure);
   const flattened = individualTestStructures.reduce((prev, curr) => [...prev, ...curr], []);

@@ -14,5 +14,8 @@ module.exports = {
   settings: {
     'import/resolver': { typescript: {} },
   },
+  rules: {
+    '@typescript-eslint/no-explicit-any': 0,
+  },
   ignorePatterns: ['node_modules', 'dist', '.prettierrc.js'],
 };
