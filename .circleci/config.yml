@@ -9,9 +9,10 @@ executors:
 jobs:
   test-and-build:
     executor: build-agent
+    working_directory: ~/tmp/cypress-mindmap/cli
     steps:
       - checkout
-      - run: cd cli
+          path: ~/tmp/cypress-mindmap
       - run: npm ci
       - run: npm run lint
       - run: npm run build
