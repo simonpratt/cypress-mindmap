@@ -1,8 +1,8 @@
 import { parseModule } from 'esprima';
 import { Statement } from 'estree';
-import ts from 'typescript';
 import fs from 'fs';
 import glob from 'glob';
+import ts from 'typescript';
 import yargs from 'yargs';
 import { hideBin } from 'yargs/helpers';
 
