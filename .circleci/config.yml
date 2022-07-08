@@ -11,6 +11,7 @@ jobs:
     executor: build-agent
     steps:
       - checkout
+      - run: cd cli
       - run: npm ci
       - run: npm run lint
       - run: npm run build

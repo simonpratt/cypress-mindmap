@@ -16,13 +16,20 @@ const argv = yargs(hideBin(process.argv))
       required: true,
       type: 'string',
     },
+    out: {
+      alias: 'o',
+      description: 'output file to save json structure into',
+      requiresArg: true,
+      required: true,
+      type: 'string',
+    },
   })
   .default('spec', '**/*.cy.ts').argv;
 
 interface TestStructure {
-  key: string;
-  nestedDescribes: TestStructure[];
-  testCases: string[];
+  describe: string;
+  nested: TestStructure[];
+  tests: string[];
 }
 
 const isDescribeNode = (node: Statement): boolean => {
@@ -70,9 +77,9 @@ const getExpressionBodyNodes = (node: Statement): Statement[] => {
 
 const unwindDescribeBlock = (node: Statement): TestStructure => {
   return {
-    key: getFirstArgumentValue(node),
-    nestedDescribes: getExpressionBodyNodes(node).filter(isDescribeNode).map(unwindDescribeBlock),
-    testCases: getExpressionBodyNodes(node).filter(isItNode).map(getFirstArgumentValue),
+    describe: getFirstArgumentValue(node),
+    nested: getExpressionBodyNodes(node).filter(isDescribeNode).map(unwindDescribeBlock),
+    tests: getExpressionBodyNodes(node).filter(isItNode).map(getFirstArgumentValue),
   };
 };
 
@@ -94,16 +101,16 @@ const combineTestStructures = (structures: TestStructure[]): TestStructure[] => 
   const combined: TestStructure[] = [];
 
   structures.forEach((structure) => {
-    const matching = combined.find((c) => c.key === structure.key);
+    const matching = combined.find((c) => c.describe === structure.describe);
 
     if (matching) {
-      matching.nestedDescribes = [...matching.nestedDescribes, ...combineTestStructures(structure.nestedDescribes)];
-      matching.testCases = [...matching.testCases, ...structure.testCases];
+      matching.nested = [...matching.nested, ...combineTestStructures(structure.nested)];
+      matching.tests = [...matching.tests, ...structure.tests];
     } else {
       combined.push({
-        key: structure.key,
-        nestedDescribes: structure.nestedDescribes,
-        testCases: structure.testCases,
+        describe: structure.describe,
+        nested: structure.nested,
+        tests: structure.tests,
       });
     }
   });
@@ -111,37 +118,51 @@ const combineTestStructures = (structures: TestStructure[]): TestStructure[] => 
   return combined;
 };
 
+const countTestCases = (structure: TestStructure[]): number => {
+  return structure
+    .map((structure) => structure.tests.length + countTestCases(structure.nested))
+    .reduce((prev, curr) => prev + curr, 0);
+};
+
 const findMatchingFiles = (pattern: string): string[] => {
   const files = glob.sync(pattern);
   return files;
 };
 
-const parseMatchingFiles = (pattern: string) => {
+const parseMatchingFiles = (pattern: string): TestStructure[] => {
   const files = findMatchingFiles(pattern);
 
   if (!files.length) {
     throw new Error(`No files were found matching pattern '${pattern}'`);
   }
 
-  console.log('files found', files);
+  console.log(`${files.length} files found`);
+  files.forEach((file) => console.log(file));
+  console.log('\r\n');
 
   const individualTestStructures = files.map(parseFileToStructure);
   const flattened = individualTestStructures.reduce((prev, curr) => [...prev, ...curr], []);
   const combined = combineTestStructures(flattened);
 
-  fs.writeFileSync('__temp_structure.json', JSON.stringify(combined));
-  console.log(combined);
+  console.log(`${countTestCases(combined)} tests found`);
+
+  return combined;
 };
 
 const run = async () => {
   const spec = (await argv).spec;
+  const out = (await argv).out;
 
   if (!spec) {
     throw new Error('spec must be provided');
   }
 
-  parseMatchingFiles(spec);
-  // './mock/**/*.test.ts'
+  if (!out) {
+    throw new Error('out must be provided');
+  }
+
+  const structure = parseMatchingFiles(spec);
+  fs.writeFileSync(out, JSON.stringify(structure));
 };
 
 export default run;
