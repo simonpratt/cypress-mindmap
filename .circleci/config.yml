@@ -9,16 +9,13 @@ executors:
 jobs:
   test-and-build:
     executor: build-agent
-    working_directory: /tmp/cypress-mindmap/cli
     steps:
-      - checkout:
-          path: /tmp/cypress-mindmap
-      - run: ls
+      - checkout
       - run: npm ci
       - run: npm run lint
       - run: npm run build
       - persist_to_workspace:
-          root: /tmp/cypress-mindmap/cli
+          root: /tmp/cypress-mindmap
           paths:
             - dist
             - bin
@@ -29,7 +26,6 @@ jobs:
     steps:
       - attach_workspace:
           at: /tmp/cypress-mindmap
-      - run: ls
       - run: printf "//`node -p \"require('url').parse(process.env.NPM_REGISTRY_URL || 'https://registry.npmjs.org').host\"`/:_authToken=${NPM_TOKEN}\nregistry=${NPM_REGISTRY_URL:-https://registry.npmjs.org}\n" > .npmrc
       - run: npm whoami
       - run: npm publish --access public beta
@@ -39,18 +35,9 @@ jobs:
     steps:
       - attach_workspace:
           at: /tmp/cypress-mindmap
-      - run: ls
       - run: printf "//`node -p \"require('url').parse(process.env.NPM_REGISTRY_URL || 'https://registry.npmjs.org').host\"`/:_authToken=${NPM_TOKEN}\nregistry=${NPM_REGISTRY_URL:-https://registry.npmjs.org}\n" > .npmrc
       - run: npm whoami
       - run: npm publish --access public
-
-  temp-step:
-    executor: build-agent
-    steps:
-      - attach_workspace:
-          at: /tmp/cypress-mindmap
-      - run: ls
-      
 
 workflows:
   development:
@@ -77,6 +64,3 @@ workflows:
               ignore: /.*/
             tags:
               only: /^v[0-9]+\.[0-9]+\.[0-9]+$/
-      - temp-step:
-          requires:
-            - test-and-build
