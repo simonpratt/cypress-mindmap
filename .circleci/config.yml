@@ -13,11 +13,12 @@ jobs:
     steps:
       - checkout:
           path: ~/tmp/cypress-mindmap
+      - run: ls
       - run: npm ci
       - run: npm run lint
       - run: npm run build
       - persist_to_workspace:
-          root: /tmp/cypress-mindmap
+          root: ~/tmp/cypress-mindmap
           paths:
             - dist
             - bin
@@ -27,7 +28,8 @@ jobs:
     executor: build-agent
     steps:
       - attach_workspace:
-          at: /tmp/cypress-mindmap
+          at: ~/tmp/cypress-mindmap
+      - run: ls
       - run: printf "//`node -p \"require('url').parse(process.env.NPM_REGISTRY_URL || 'https://registry.npmjs.org').host\"`/:_authToken=${NPM_TOKEN}\nregistry=${NPM_REGISTRY_URL:-https://registry.npmjs.org}\n" > .npmrc
       - run: npm whoami
       - run: npm publish --access public beta
@@ -36,7 +38,7 @@ jobs:
     executor: build-agent
     steps:
       - attach_workspace:
-          at: /tmp/cypress-mindmap
+          at: ~/tmp/cypress-mindmap
       - run: printf "//`node -p \"require('url').parse(process.env.NPM_REGISTRY_URL || 'https://registry.npmjs.org').host\"`/:_authToken=${NPM_TOKEN}\nregistry=${NPM_REGISTRY_URL:-https://registry.npmjs.org}\n" > .npmrc
       - run: npm whoami
       - run: npm publish --access public
