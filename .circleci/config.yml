@@ -43,6 +43,13 @@ jobs:
       - run: printf "//`node -p \"require('url').parse(process.env.NPM_REGISTRY_URL || 'https://registry.npmjs.org').host\"`/:_authToken=${NPM_TOKEN}\nregistry=${NPM_REGISTRY_URL:-https://registry.npmjs.org}\n" > .npmrc
       - run: npm whoami
       - run: npm publish --access public
+
+  temp-step:
+    executor: build-agent
+    steps:
+      - attach_workspace:
+          at: /tmp/cypress-mindmap
+      - run: ls
       
 
 workflows:
@@ -70,3 +77,6 @@ workflows:
               ignore: /.*/
             tags:
               only: /^v[0-9]+\.[0-9]+\.[0-9]+$/
+      - temp-step:
+          requires:
+            - test-and-build
