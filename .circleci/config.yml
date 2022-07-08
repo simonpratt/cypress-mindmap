@@ -39,6 +39,7 @@ jobs:
     steps:
       - attach_workspace:
           at: ~/tmp/cypress-mindmap/cli
+      - run: ls
       - run: printf "//`node -p \"require('url').parse(process.env.NPM_REGISTRY_URL || 'https://registry.npmjs.org').host\"`/:_authToken=${NPM_TOKEN}\nregistry=${NPM_REGISTRY_URL:-https://registry.npmjs.org}\n" > .npmrc
       - run: npm whoami
       - run: npm publish --access public
