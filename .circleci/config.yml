@@ -9,16 +9,16 @@ executors:
 jobs:
   test-and-build:
     executor: build-agent
-    working_directory: ~/tmp/cypress-mindmap/cli
+    working_directory: /tmp/cypress-mindmap/cli
     steps:
       - checkout:
-          path: ~/tmp/cypress-mindmap
+          path: /tmp/cypress-mindmap
       - run: ls
       - run: npm ci
       - run: npm run lint
       - run: npm run build
       - persist_to_workspace:
-          root: ~/tmp/cypress-mindmap/cli
+          root: /tmp/cypress-mindmap/cli
           paths:
             - dist
             - bin
@@ -28,7 +28,7 @@ jobs:
     executor: build-agent
     steps:
       - attach_workspace:
-          at: ~/tmp/cypress-mindmap/cli
+          at: /tmp/cypress-mindmap
       - run: ls
       - run: printf "//`node -p \"require('url').parse(process.env.NPM_REGISTRY_URL || 'https://registry.npmjs.org').host\"`/:_authToken=${NPM_TOKEN}\nregistry=${NPM_REGISTRY_URL:-https://registry.npmjs.org}\n" > .npmrc
       - run: npm whoami
@@ -38,11 +38,12 @@ jobs:
     executor: build-agent
     steps:
       - attach_workspace:
-          at: ~/tmp/cypress-mindmap/cli
+          at: /tmp/cypress-mindmap
       - run: ls
       - run: printf "//`node -p \"require('url').parse(process.env.NPM_REGISTRY_URL || 'https://registry.npmjs.org').host\"`/:_authToken=${NPM_TOKEN}\nregistry=${NPM_REGISTRY_URL:-https://registry.npmjs.org}\n" > .npmrc
       - run: npm whoami
       - run: npm publish --access public
+      
 
 workflows:
   development:
