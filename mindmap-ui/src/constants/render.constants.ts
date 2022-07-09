@@ -1,0 +1,4 @@
+export const LINE_SPACING_FACTOR = 0.2;
+export const VERTICAL_SPACE_BETWEEN_BLOCKS = 45;
+export const HORIZONTAL_SPACE_BETWEEN_BLOCKS = 150;
+export const ANCHOR_X_OFFSET = 10;
