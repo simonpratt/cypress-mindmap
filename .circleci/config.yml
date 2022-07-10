@@ -4,6 +4,7 @@ executors:
   build-agent:
     docker:
       - image: cimg/node:lts
+    resource_class: medium
     working_directory: /tmp/cypress-mindmap
 
 jobs:
