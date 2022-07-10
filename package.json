@@ -1,6 +1,6 @@
 {
   "name": "@dtdot/cypress-mindmap",
-  "version": "0.0.11",
+  "version": "0.0.12",
   "description": "A mindmap generator for cypress test suites",
   "author": "Simon Pratt <19920260+simonpratt@users.noreply.github.com>",
   "main": "bin/cli",
