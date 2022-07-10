@@ -5,6 +5,7 @@ import glob from 'glob';
 import ts from 'typescript';
 import yargs from 'yargs';
 import { hideBin } from 'yargs/helpers';
+import { getPackageDirectory } from './helpers/getPackageDirectory.js';
 import { start } from './server.js';
 
 const argv = yargs(hideBin(process.argv))
@@ -172,12 +173,12 @@ const run = async () => {
   }
 
   // If the UI flag is set then we want to control the output path
-  const outWrapped = ui ? 'TEMP_MINDMAP/cypress_mindmap.json' : out;
+  const outWrapped = ui ? `${getPackageDirectory()}/json/cypress_mindmap.json` : out;
 
   // If UI is set we need to create the dir
   // Need a better solution...
   if (ui) {
-    fs.mkdirSync('TEMP_MINDMAP', { recursive: true });
+    fs.mkdirSync(`${getPackageDirectory()}/json`, { recursive: true });
   }
 
   const structure = parseMatchingFiles(spec);
