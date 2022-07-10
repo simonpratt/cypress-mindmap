@@ -45,7 +45,7 @@ const nodes = {
       text: 'Canvas',
       nodes: [
         {
-          text: 'Lots of node trees. There really are lots of trees that need lots and lots of maths',
+          text: 'Lots of node trees. There really are lots of trees that need lots and lots of maths. More than you would expect. It even needs to wrap lots and lots of lines of text without looking funny',
         },
         {
           text: 'How to zoom in and out?',

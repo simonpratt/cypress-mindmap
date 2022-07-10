@@ -12,6 +12,14 @@ export interface TreeNodeLayout {
   treeHeight: number;
 }
 
+export interface TreeNodeHeight {
+  lines: string[];
+  nodes: TreeNodeHeight[];
+  width: number;
+  height: number;
+  treeHeight: number;
+}
+
 export interface TreeNode {
   text: string;
   nodes?: TreeNode[];
@@ -42,86 +50,68 @@ const expandTreeToTextBlocks = (
   };
 };
 
-// const getNodeWithAbsoultePosition = (
-//   canvas2D: CanvasRenderingContext2D,
-//   node: TreeNodeExtended,
-//   x: number,
-//   y: number,
-// ): TreeNodeLayout => {};
-
-const mutateNodeWithYOffset = (node: TreeNodeLayout, yOffset: number): void => {
-  // Mutate child nodes
-  node.nodes.forEach((_node) => mutateNodeWithYOffset(_node, yOffset));
-
-  // Mutate this node
-  node.y += yOffset;
-};
-
-const mutateNodeWithXOffset = (node: TreeNodeLayout, xOffset: number): void => {
-  // Mutate child nodes
-  node.nodes.forEach((_node) => mutateNodeWithXOffset(_node, xOffset));
-
-  // Mutate this node
-  node.x += xOffset;
-};
-
-const getNodeLayout = (canvas2D: CanvasRenderingContext2D, node: TreeNodeExtended): TreeNodeLayout => {
-  // If there are no children, we're a leaf node
-  // Just go 0,0, and persist our width/height
+const getNodeHeights = (canvas2D: CanvasRenderingContext2D, node: TreeNodeExtended): TreeNodeHeight => {
+  // If there are no children, then the tree height is the same as our own height
   if (!node.nodes.length) {
     return {
       ...node,
       nodes: [],
-      x: 0,
-      y: 0,
       treeHeight: node.height,
     };
   }
 
-  // Process the child nodes first so that we start at the leaves and work backwards
-  const nodesWithLayout = node.nodes.map((_node) => getNodeLayout(canvas2D, _node));
+  // Process child nodes first so that we know what the current nodes height will be
+  const nodesWithHeight = node.nodes.map((_node) => getNodeHeights(canvas2D, _node));
 
-  // Height of all child nodes is now set
-  // We should be able to layout child nodes
-  // This will override what leaves have defined as their own coordinates
-  const totalHeight =
-    sum(nodesWithLayout.map((_node) => _node.treeHeight)) +
-    (nodesWithLayout.length - 1) * VERTICAL_SPACE_BETWEEN_BLOCKS;
+  // Use the height of the child nodes to calculate what the current node height will be
+  const treeHeight =
+    sum(nodesWithHeight.map((_node) => _node.treeHeight)) +
+    (nodesWithHeight.length - 1) * VERTICAL_SPACE_BETWEEN_BLOCKS;
 
-  // Loop over all nodes and set y coordinate
-  // This is a mutation and shifts the entire portion of the tree
-  let yCurr = 0 - totalHeight / 2;
-  nodesWithLayout.forEach((_node) => {
-    const offset = yCurr - _node.y + _node.treeHeight / 2;
-    mutateNodeWithYOffset(_node, offset);
-    yCurr = yCurr + _node.treeHeight + VERTICAL_SPACE_BETWEEN_BLOCKS;
-  });
-
-  // Loop over all nodes and set the x coordinate
-  // This is a mutation and shifts the entire portion of the tree
-  nodesWithLayout.forEach((_node) => {
-    mutateNodeWithXOffset(_node, node.width + HORIZONTAL_SPACE_BETWEEN_BLOCKS);
-  });
-
-  // Calculate full width and height for current node
-  // const width = node.width + HORIZONTAL_SPACE_BETWEEN_BLOCKS + Math.max(...nodesWithLayout.map((_node) => _node.width));
-  // const height = Math.max(node.height, totalHeight);
-  // console.log('calcuating y', node.lines[0], totalHeight, node.height, totalHeight / 2 - node.height / 2);
-
-  // Redefine the current node
-  const updatedNode = {
-    lines: node.lines,
-    nodes: nodesWithLayout,
-    width: node.width,
-    height: node.height,
-    x: 0,
-    y: 0,
-    treeHeight: Math.max(node.height, totalHeight),
+  // Return the updated node with heights
+  return {
+    ...node,
+    nodes: nodesWithHeight,
+    treeHeight,
   };
+};
 
-  // Re-walk the node tree and calculate all of the absolute positions
-  // return getNodeWithAbsoultePosition(canvas2D, updatedNode, 0, 0);
-  return updatedNode;
+const setNodePosition = (
+  canvas2D: CanvasRenderingContext2D,
+  node: TreeNodeHeight,
+  x: number,
+  y: number,
+): TreeNodeLayout => {
+  // Start the child y above the current y to spread nodes out evenly
+  // Add half our hight back on to return to the midpoint
+  let nextNodeY = y - node.treeHeight / 2 + node.height / 2;
+
+  // Loop through each child node and set their position
+  return {
+    ...node,
+    nodes: node.nodes.map((_node) => {
+      // Child should be centered within the height that it's tree occupies
+      const childTopY = nextNodeY;
+      const childBottomY = nextNodeY + _node.treeHeight;
+      const childY = (childTopY + childBottomY) / 2 - _node.height / 2;
+
+      const childX = x + node.width + HORIZONTAL_SPACE_BETWEEN_BLOCKS;
+
+      nextNodeY = nextNodeY + _node.treeHeight + VERTICAL_SPACE_BETWEEN_BLOCKS;
+      return setNodePosition(canvas2D, _node, childX, childY);
+    }),
+    x,
+    y,
+  };
+};
+
+const getNodeLayout = (canvas2D: CanvasRenderingContext2D, node: TreeNodeHeight): TreeNodeLayout => {
+  // Calculate position of the root node
+  const y = node.treeHeight / 2 - node.height / 2;
+  const x = 0;
+
+  // Set the Root node position and then the rest are set recursively
+  return setNodePosition(canvas2D, node, x, y);
 };
 
 /**
@@ -138,11 +128,11 @@ export const getTreeLayout = (
   // Iterate over all nodes in the tree, split into lines, and calculate the width + height of each text block
   const expanded = expandTreeToTextBlocks(canvas2D, node, maxWidth, fontSize);
 
-  // Start from the leaves of the tree and layout each node relative to its parent
-  const withLayout = getNodeLayout(canvas2D, expanded);
+  // First calculate all the tree heights of nodes
+  const withHeight = getNodeHeights(canvas2D, expanded);
 
-  // TEMP OFFSET
-  mutateNodeWithYOffset(withLayout, 200);
+  // Recursively calculate the x/y position of each node
+  const withLayout = getNodeLayout(canvas2D, withHeight);
 
   return withLayout;
 };
