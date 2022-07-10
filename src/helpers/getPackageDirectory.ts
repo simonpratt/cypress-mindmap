@@ -5,6 +5,5 @@ import { fileURLToPath } from 'url';
 const __dirname = dirname(fileURLToPath(import.meta.url)).replace('/dist/helpers', '');
 
 export const getPackageDirectory = () => {
-  console.log('package dir', __dirname);
   return __dirname;
 };
