@@ -7,6 +7,11 @@ const CanvasContainer = styled.div`
 `;
 
 const GlobalStyles = createGlobalStyle`
+html {
+  // Disable gesture navigation
+  overscroll-behavior-x: none;
+}
+
 body {
   margin: 0;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans',
@@ -15,6 +20,10 @@ body {
   -moz-osx-font-smoothing: grayscale;
   background-color: #424448;
   color: #e2e2e2;
+  overflow: hidden;
+
+  // Disable gesture navigation
+  overscroll-behavior-x: none;
 
   * {
     box-sizing: border-box;

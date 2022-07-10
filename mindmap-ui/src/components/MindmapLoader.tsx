@@ -9,6 +9,34 @@ interface TestStructure {
   tests: string[];
 }
 
+const sample_nodes = {
+  text: 'Mindmap',
+  nodes: [
+    {
+      text: 'Canvas',
+      nodes: [
+        {
+          text: 'Lots of node trees. There really are lots of trees that need lots and lots of maths. More than you would expect. It even needs to wrap lots and lots of lines of text without looking funny',
+        },
+        {
+          text: 'How to zoom in and out?',
+        },
+      ],
+    },
+    {
+      text: 'Examples',
+      nodes: [
+        {
+          text: 'A simple example to start with...',
+        },
+        {
+          text: 'A simple example to start with...',
+        },
+      ],
+    },
+  ],
+};
+
 const parseTestStructureToNodeTree = (tree: TestStructure): TreeNode => {
   const testNodes = tree.tests.map((test) => ({
     text: test,
@@ -30,7 +58,8 @@ const MindmapLoader = () => {
   }
 
   if (error) {
-    return <div>{JSON.stringify(error)}</div>;
+    // Use some sample data for now
+    return <Mindmap json={sample_nodes} />;
   }
 
   const nodes = {

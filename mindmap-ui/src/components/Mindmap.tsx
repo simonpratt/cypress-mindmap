@@ -1,68 +1,7 @@
-import { useEffect, useRef } from 'react';
+import { useCallback, useEffect, useReducer, useRef, useState } from 'react';
 import styled from 'styled-components';
 import { getTreeLayout, TreeNode } from '../helpers/getTreeLayout';
 import { renderTree } from '../render/renderTree';
-
-interface Structure {
-  describe: string;
-  nested: Structure[];
-  tests: string[];
-}
-
-// const structure: Structure = [
-//   {
-//     describe: 'auth',
-//     nested: [
-//       {
-//         describe: 'login',
-//         nested: [],
-//         tests: [
-//           'must be able to login using the correct username and password',
-//           'must not be able to login with an incorrect password',
-//         ],
-//       },
-//       { describe: 'cli', nested: [], tests: ['must be able to login via the cli'] },
-//       {
-//         describe: 'register',
-//         nested: [],
-//         tests: [
-//           'must be able to register using a valid email and password',
-//           'must not be able to register with an invalid email',
-//         ],
-//       },
-//     ],
-//     tests: [],
-//   },
-//   { describe: 'users', nested: [], tests: ['must be able to view the user details'] },
-// ];
-
-const nodes = {
-  text: 'Mindmap',
-  nodes: [
-    {
-      text: 'XX Canvas',
-      nodes: [
-        {
-          text: 'Lots of node trees. There really are lots of trees that need lots and lots of maths. More than you would expect. It even needs to wrap lots and lots of lines of text without looking funny',
-        },
-        {
-          text: 'How to zoom in and out?',
-        },
-      ],
-    },
-    {
-      text: 'Examples',
-      nodes: [
-        {
-          text: 'A simple example to start with...',
-        },
-        {
-          text: 'A simple example to start with...',
-        },
-      ],
-    },
-  ],
-};
 
 const FilledDiv = styled.div`
   height: 100vh;
@@ -72,24 +11,124 @@ const FilledDiv = styled.div`
 const FillCanvas = styled.canvas`
   height: 100vh;
   width: 100vw;
+
+  cursor: grab;
 `;
 
 interface MindmapProps {
   json: TreeNode;
 }
 
+interface MouseCoords {
+  x: number;
+  y: number;
+}
+
+interface ZoomLevel {
+  val: number;
+}
+
+const coordsReducer = (state: MouseCoords, action: MouseCoords) => {
+  return {
+    x: state.x + action.x,
+    y: state.y + action.y,
+  };
+};
+
+const zoomReducer = (state: ZoomLevel, action: ZoomLevel) => {
+  return {
+    val: Math.max(0.1, state.val + action.val * 0.001),
+  };
+};
+
 const Mindmap = ({ json }: MindmapProps) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const mouseLastSeen = useRef<MouseCoords>();
+  const controlPressed = useRef<boolean>();
+
+  const [coords, dispatchPan] = useReducer(coordsReducer, { x: 0, y: 0 });
+  const [zoom, dispatchZoom] = useReducer(zoomReducer, { val: 1 });
+
+  const mouseMoveHandler = useCallback((e: MouseEvent) => {
+    const lastSeen = mouseLastSeen.current || { x: 0, y: 0 };
+
+    const xDiff = e.x - lastSeen.x;
+    const yDiff = e.y - lastSeen.y;
+
+    mouseLastSeen.current = {
+      x: e.x,
+      y: e.y,
+    };
+
+    dispatchPan({ x: xDiff, y: yDiff });
+  }, []);
+
+  const wheelHandler = useCallback((e: WheelEvent) => {
+    e.preventDefault();
+
+    if (controlPressed.current) {
+      dispatchZoom({ val: e.deltaY });
+      return;
+    }
+
+    dispatchPan({ x: e.deltaX * -0.7, y: e.deltaY * -0.7 });
+  }, []);
+
+  // Setup mouse event listeners
+  useEffect(() => {
+    window.addEventListener('keydown', (e: KeyboardEvent) => {
+      if (e.key === 'Meta' || e.key === 'Control') {
+        controlPressed.current = true;
+      }
+    });
+
+    window.addEventListener('keyup', (e: KeyboardEvent) => {
+      if (e.key === 'Meta' || e.key === 'Control') {
+        controlPressed.current = false;
+      }
+    });
+
+    window.addEventListener('mousedown', (e: MouseEvent) => {
+      mouseLastSeen.current = {
+        x: e.x,
+        y: e.y,
+      };
+
+      window.addEventListener('mousemove', mouseMoveHandler);
+    });
+
+    window.addEventListener('mouseout', () => {
+      window.removeEventListener('mousemove', mouseMoveHandler);
+    });
+
+    window.addEventListener('mouseup', () => {
+      window.removeEventListener('mousemove', mouseMoveHandler);
+    });
+
+    // window.addEventListener('touchstart', (e) => {
+    //   e.preventDefault();
+    // });
+
+    window.addEventListener('wheel', wheelHandler);
+  }, []);
 
   useEffect(() => {
-    const canvas = canvasRef.current!;
+    const canvas = canvasRef.current;
+
+    if (!canvas) {
+      return;
+    }
 
     // Resize
     canvas.width = window.innerWidth * 2;
     canvas.height = window.innerHeight * 2;
 
     // Get context
-    const context = canvas.getContext('2d')!;
+    const context = canvas.getContext('2d');
+
+    if (!context) {
+      return;
+    }
 
     // Set font
     context.font = '32px Roboto, sans-serif';
@@ -98,20 +137,21 @@ const Mindmap = ({ json }: MindmapProps) => {
   }, []);
 
   useEffect(() => {
-    const canvas = canvasRef.current!;
-    const context = canvas.getContext('2d')!;
+    const canvas = canvasRef.current;
+    const context = canvas?.getContext('2d');
 
-    // const textLines = getTextBlock(
-    //   context,
-    //   'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt',
-    //   800,
-    // );
+    if (!canvas || !context) {
+      return;
+    }
 
-    // renderTextBlock(context, textLines, 40, 40, 32);
+    context.clearRect(0, 0, canvas.width, canvas.height);
+    context.setTransform(1, 0, 0, 1, 0, 0);
+    context.scale(zoom.val, zoom.val);
+    context.translate(coords.x * 2, coords.y * 2);
+
     const treeLayout = getTreeLayout(context, json, 800, 32);
     renderTree(context, treeLayout, 32);
-    console.log(treeLayout);
-  }, []);
+  }, [coords, zoom]);
 
   return (
     <FilledDiv>
