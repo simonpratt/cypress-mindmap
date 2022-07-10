@@ -1,5 +1,5 @@
 import styled, { createGlobalStyle } from 'styled-components';
-import Mindmap from './components/Mindmap';
+import MindmapLoader from './components/MindmapLoader';
 
 const CanvasContainer = styled.div`
   height: 100vh;
@@ -27,7 +27,7 @@ function App() {
     <>
       <GlobalStyles />
       <CanvasContainer>
-        <Mindmap />
+        <MindmapLoader />
       </CanvasContainer>
     </>
   );

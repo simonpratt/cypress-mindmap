@@ -5,6 +5,7 @@ import glob from 'glob';
 import ts from 'typescript';
 import yargs from 'yargs';
 import { hideBin } from 'yargs/helpers';
+import { start } from './server.js';
 
 const argv = yargs(hideBin(process.argv))
   .usage('Run against a cypress test directory to generate a mindmap of that directory')
@@ -19,12 +20,20 @@ const argv = yargs(hideBin(process.argv))
     out: {
       alias: 'o',
       description: 'output file to save json structure into',
-      requiresArg: true,
+      requiresArg: false,
       required: true,
       type: 'string',
     },
+    ui: {
+      alias: 'u',
+      description: 'enable the user interface',
+      requiresArg: false,
+      required: false,
+      type: 'boolean',
+    },
   })
-  .default('spec', '**/*.cy.ts').argv;
+  .default('spec', '**/*.cy.ts')
+  .default('out', 'cypress-mindmap.json').argv;
 
 interface TestStructure {
   describe: string;
@@ -152,6 +161,7 @@ const parseMatchingFiles = (pattern: string): TestStructure[] => {
 const run = async () => {
   const spec = (await argv).spec;
   const out = (await argv).out;
+  const ui = (await argv).ui;
 
   if (!spec) {
     throw new Error('spec must be provided');
@@ -161,8 +171,23 @@ const run = async () => {
     throw new Error('out must be provided');
   }
 
+  // If the UI flag is set then we want to control the output path
+  const outWrapped = ui ? 'TEMP_MINDMAP/cypress_mindmap.json' : out;
+
+  // If UI is set we need to create the dir
+  // Need a better solution...
+  if (ui) {
+    fs.mkdirSync('TEMP_MINDMAP', { recursive: true });
+  }
+
   const structure = parseMatchingFiles(spec);
-  fs.writeFileSync(out, JSON.stringify(structure));
+  fs.writeFileSync(outWrapped, JSON.stringify(structure));
+
+  // Serve the JSON if we're running the UI
+  if (ui) {
+    start();
+    console.log('\r\n\r\nMindmap server running at http://localhost:5112');
+  }
 };
 
 export default run;

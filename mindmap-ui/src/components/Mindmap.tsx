@@ -1,8 +1,6 @@
 import { useEffect, useRef } from 'react';
 import styled from 'styled-components';
-import { getTextBlock } from '../helpers/getTextBlock';
-import { getTreeLayout } from '../helpers/getTreeLayout';
-import { renderTextBlock } from '../render/renderTextBlock';
+import { getTreeLayout, TreeNode } from '../helpers/getTreeLayout';
 import { renderTree } from '../render/renderTree';
 
 interface Structure {
@@ -42,7 +40,7 @@ const nodes = {
   text: 'Mindmap',
   nodes: [
     {
-      text: 'Canvas',
+      text: 'XX Canvas',
       nodes: [
         {
           text: 'Lots of node trees. There really are lots of trees that need lots and lots of maths. More than you would expect. It even needs to wrap lots and lots of lines of text without looking funny',
@@ -76,7 +74,11 @@ const FillCanvas = styled.canvas`
   width: 100vw;
 `;
 
-const Mindmap = () => {
+interface MindmapProps {
+  json: TreeNode;
+}
+
+const Mindmap = ({ json }: MindmapProps) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
@@ -106,7 +108,7 @@ const Mindmap = () => {
     // );
 
     // renderTextBlock(context, textLines, 40, 40, 32);
-    const treeLayout = getTreeLayout(context, nodes, 800, 32);
+    const treeLayout = getTreeLayout(context, json, 800, 32);
     renderTree(context, treeLayout, 32);
     console.log(treeLayout);
   }, []);
