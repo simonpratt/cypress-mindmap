@@ -144,12 +144,13 @@ const Mindmap = ({ json }: MindmapProps) => {
       return;
     }
 
-    context.clearRect(0, 0, canvas.width, canvas.height);
+    const treeLayout = getTreeLayout(context, json, 800, 32);
+
+    context.clearRect(0, 0, treeLayout.treeWidth + 10, treeLayout.treeHeight + 10);
     context.setTransform(1, 0, 0, 1, 0, 0);
     context.scale(zoom.val, zoom.val);
     context.translate(coords.x * 2, coords.y * 2);
 
-    const treeLayout = getTreeLayout(context, json, 800, 32);
     renderTree(context, treeLayout, 32);
   }, [coords, zoom]);
 

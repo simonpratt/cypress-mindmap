@@ -10,6 +10,7 @@ export interface TreeNodeLayout {
   width: number;
   height: number;
   treeHeight: number;
+  treeWidth: number;
 }
 
 export interface TreeNodeHeight {
@@ -18,6 +19,7 @@ export interface TreeNodeHeight {
   width: number;
   height: number;
   treeHeight: number;
+  treeWidth: number;
 }
 
 export interface TreeNode {
@@ -50,29 +52,35 @@ const expandTreeToTextBlocks = (
   };
 };
 
-const getNodeHeights = (canvas2D: CanvasRenderingContext2D, node: TreeNodeExtended): TreeNodeHeight => {
+const getNodeSizes = (canvas2D: CanvasRenderingContext2D, node: TreeNodeExtended): TreeNodeHeight => {
   // If there are no children, then the tree height is the same as our own height
   if (!node.nodes.length) {
     return {
       ...node,
       nodes: [],
       treeHeight: node.height,
+      treeWidth: node.width,
     };
   }
 
   // Process child nodes first so that we know what the current nodes height will be
-  const nodesWithHeight = node.nodes.map((_node) => getNodeHeights(canvas2D, _node));
+  const nodesWithHeight = node.nodes.map((_node) => getNodeSizes(canvas2D, _node));
 
   // Use the height of the child nodes to calculate what the current node height will be
   const treeHeight =
     sum(nodesWithHeight.map((_node) => _node.treeHeight)) +
     (nodesWithHeight.length - 1) * VERTICAL_SPACE_BETWEEN_BLOCKS;
 
+  // Grap the width of the child nodes, this node, and the gap between
+  const treeWidth =
+    Math.max(...nodesWithHeight.map((_node) => _node.treeWidth)) + node.width + HORIZONTAL_SPACE_BETWEEN_BLOCKS;
+
   // Return the updated node with heights
   return {
     ...node,
     nodes: nodesWithHeight,
     treeHeight,
+    treeWidth,
   };
 };
 
@@ -129,7 +137,7 @@ export const getTreeLayout = (
   const expanded = expandTreeToTextBlocks(canvas2D, node, maxWidth, fontSize);
 
   // First calculate all the tree heights of nodes
-  const withHeight = getNodeHeights(canvas2D, expanded);
+  const withHeight = getNodeSizes(canvas2D, expanded);
 
   // Recursively calculate the x/y position of each node
   const withLayout = getNodeLayout(canvas2D, withHeight);
