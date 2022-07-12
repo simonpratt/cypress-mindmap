@@ -15,6 +15,11 @@ export const renderTree = (canvas2D: CanvasRenderingContext2D, node: TreeNodeLay
     y: node.y + node.height / 2 + 4,
   };
 
+  // Define the line style
+  canvas2D.lineWidth = 4;
+  canvas2D.strokeStyle = '#e2e2e2';
+  canvas2D.setLineDash([]);
+
   // Render the line between current node and all child nodes
   node.nodes.forEach((_node) => {
     const nodeAnchor = {
@@ -22,8 +27,6 @@ export const renderTree = (canvas2D: CanvasRenderingContext2D, node: TreeNodeLay
       y: _node.y + _node.height / 2 + 4,
     };
 
-    canvas2D.lineWidth = 4;
-    canvas2D.strokeStyle = '#e2e2e2';
     canvas2D.beginPath();
     canvas2D.moveTo(currentAnchor.x, currentAnchor.y);
     canvas2D.bezierCurveTo(

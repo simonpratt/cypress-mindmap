@@ -1,6 +1,8 @@
-import { useCallback, useEffect, useReducer, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from 'react';
 import styled from 'styled-components';
 import { getTreeLayout, TreeNode } from '../helpers/getTreeLayout';
+import { getVisibleCanvasBounds } from '../helpers/getVisibleBounds';
+import { renderGrid } from '../render/renderGrid';
 import { renderTree } from '../render/renderTree';
 
 const FilledDiv = styled.div`
@@ -42,12 +44,62 @@ const zoomReducer = (state: ZoomLevel, action: ZoomLevel) => {
 };
 
 const Mindmap = ({ json }: MindmapProps) => {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
+  // const canvasRef = useRef<HTMLCanvasElement>(null);
+  const [context2D, setContext2D] = useState<CanvasRenderingContext2D>();
+  const [canvas, setCanvas] = useState<HTMLCanvasElement>();
   const mouseLastSeen = useRef<MouseCoords>();
   const controlPressed = useRef<boolean>();
 
   const [coords, dispatchPan] = useReducer(coordsReducer, { x: 0, y: 0 });
   const [zoom, dispatchZoom] = useReducer(zoomReducer, { val: 1 });
+
+  /**
+   * Hook that is responsible for binding to the canvas element, setting initial size, and persisting to state
+   */
+  const canvasRef = useCallback(
+    (_canvas: HTMLCanvasElement) => {
+      if (_canvas !== null) {
+        // Set the height of the canvas
+        _canvas.width = window.innerWidth * 2;
+        _canvas.height = window.innerHeight * 2;
+
+        // Set to state
+        setCanvas(_canvas);
+      }
+    },
+    [setCanvas],
+  );
+
+  /**
+   * Hook that is responsible for getting and configuring the 2d drawing instance
+   */
+  useEffect(() => {
+    // Get the context
+    const _context2D = canvas?.getContext('2d');
+
+    if (!_context2D) {
+      return;
+    }
+
+    // Configure the context
+    _context2D.font = '32px Roboto, sans-serif';
+    _context2D.textBaseline = 'top';
+    _context2D.fillStyle = '#e2e2e2';
+
+    // Set to state
+    setContext2D(_context2D);
+  }, [canvas, setContext2D]);
+
+  /**
+   * Re-evaluate the tree layout whenever the tree or 2d canvas changes
+   */
+  const treeLayout = useMemo(() => {
+    if (!context2D) {
+      return;
+    }
+
+    return getTreeLayout(context2D, json, 800, 32);
+  }, [json, context2D]);
 
   const mouseMoveHandler = useCallback((e: MouseEvent) => {
     const lastSeen = mouseLastSeen.current || { x: 0, y: 0 };
@@ -74,7 +126,7 @@ const Mindmap = ({ json }: MindmapProps) => {
     dispatchPan({ x: e.deltaX * -0.7, y: e.deltaY * -0.7 });
   }, []);
 
-  // Setup mouse event listeners
+  // Hook to setup some event listeners when the page loads
   useEffect(() => {
     window.addEventListener('keydown', (e: KeyboardEvent) => {
       if (e.key === 'Meta' || e.key === 'Control') {
@@ -105,54 +157,33 @@ const Mindmap = ({ json }: MindmapProps) => {
       window.removeEventListener('mousemove', mouseMoveHandler);
     });
 
-    // window.addEventListener('touchstart', (e) => {
-    //   e.preventDefault();
-    // });
-
     window.addEventListener('wheel', wheelHandler);
   }, []);
 
+  /**
+   * Hook to run each time the zoom or pan changes and re-render the tree
+   */
   useEffect(() => {
-    const canvas = canvasRef.current;
-
-    if (!canvas) {
+    if (!canvas || !context2D || !treeLayout) {
       return;
     }
 
-    // Resize
-    canvas.width = window.innerWidth * 2;
-    canvas.height = window.innerHeight * 2;
+    // Set transforms
+    context2D.setTransform(1, 0, 0, 1, 0, 0);
+    context2D.scale(zoom.val, zoom.val);
+    context2D.translate(coords.x * 2, coords.y * 2);
 
-    // Get context
-    const context = canvas.getContext('2d');
+    // Get the visible area and clear
+    const visibleBounds = getVisibleCanvasBounds(canvas, context2D, coords.x * 2, coords.y * 2, zoom.val);
+    context2D.clearRect(visibleBounds.x, visibleBounds.y, visibleBounds.width, visibleBounds.height);
 
-    if (!context) {
-      return;
-    }
+    // Draw a grid for the visible area
+    renderGrid(context2D, visibleBounds.x, visibleBounds.y, visibleBounds.width, visibleBounds.height);
 
-    // Set font
-    context.font = '32px Roboto, sans-serif';
-    context.textBaseline = 'top';
-    context.fillStyle = '#e2e2e2';
-  }, []);
-
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    const context = canvas?.getContext('2d');
-
-    if (!canvas || !context) {
-      return;
-    }
-
-    const treeLayout = getTreeLayout(context, json, 800, 32);
-
-    context.clearRect(0, 0, treeLayout.treeWidth + 10, treeLayout.treeHeight + 10);
-    context.setTransform(1, 0, 0, 1, 0, 0);
-    context.scale(zoom.val, zoom.val);
-    context.translate(coords.x * 2, coords.y * 2);
-
-    renderTree(context, treeLayout, 32);
-  }, [coords, zoom]);
+    // Draw the tree
+    context2D.fillStyle = '#e2e2e2';
+    renderTree(context2D, treeLayout, 32);
+  }, [context2D, coords, zoom, treeLayout]);
 
   return (
     <FilledDiv>

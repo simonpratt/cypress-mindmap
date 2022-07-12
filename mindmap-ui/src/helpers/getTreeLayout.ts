@@ -1,4 +1,8 @@
-import { HORIZONTAL_SPACE_BETWEEN_BLOCKS, VERTICAL_SPACE_BETWEEN_BLOCKS } from '../constants/render.constants';
+import {
+  HORIZONTAL_SPACE_BETWEEN_BLOCKS,
+  TREE_BOUNDARY_PADDING,
+  VERTICAL_SPACE_BETWEEN_BLOCKS,
+} from '../constants/render.constants';
 import { getTextBlock } from './getTextBlock';
 import { measureTextBlock } from './measureTextBlock';
 
@@ -114,12 +118,19 @@ const setNodePosition = (
 };
 
 const getNodeLayout = (canvas2D: CanvasRenderingContext2D, node: TreeNodeHeight): TreeNodeLayout => {
+  // Add some padding to the node
+  const nodeWithPadding = {
+    ...node,
+    treeWidth: node.treeWidth + TREE_BOUNDARY_PADDING * 2,
+    treeHeight: node.treeHeight + TREE_BOUNDARY_PADDING * 2,
+  };
+
   // Calculate position of the root node
-  const y = node.treeHeight / 2 - node.height / 2;
-  const x = 0;
+  const y = node.treeHeight / 2 - node.height / 2 + TREE_BOUNDARY_PADDING;
+  const x = TREE_BOUNDARY_PADDING;
 
   // Set the Root node position and then the rest are set recursively
-  return setNodePosition(canvas2D, node, x, y);
+  return setNodePosition(canvas2D, nodeWithPadding, x, y);
 };
 
 /**
