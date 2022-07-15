@@ -7,7 +7,6 @@ export const getWindowPointOnCanvas = (canvas2D: CanvasRenderingContext2D, x: nu
   const domPoint = new window.DOMPoint(x * CANVAS_SCALE_FACTOR, y * CANVAS_SCALE_FACTOR);
   // const canvasPoint = domPoint.matrixTransform(transformationMatrix);
   const canvasPoint = transformationMatrix.inverse().transformPoint(domPoint);
-  console.log(canvasPoint.x, canvasPoint.y);
 
   return {
     x: canvasPoint.x,

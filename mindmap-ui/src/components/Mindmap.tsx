@@ -245,7 +245,7 @@ const Mindmap = ({ json }: MindmapProps) => {
     context2D.translate(coords.x, coords.y);
 
     // Get the visible area and clear
-    const visibleBounds = getVisibleCanvasBounds(canvas, context2D, coords.x, coords.y, zoom.val);
+    const visibleBounds = getVisibleCanvasBounds(context2D);
     context2D.clearRect(visibleBounds.x, visibleBounds.y, visibleBounds.width, visibleBounds.height);
 
     // Draw a grid for the visible area
