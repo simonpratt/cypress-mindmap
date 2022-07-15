@@ -5,3 +5,5 @@ export const ANCHOR_X_OFFSET = 10;
 export const GRID_SPACING_X = 120;
 export const GRID_SPACING_Y = 120;
 export const TREE_BOUNDARY_PADDING = 10;
+export const CANVAS_SCALE_FACTOR = 2;
+export const MOUSE_MOVE_CLICK_THRESHOLD = 4;
