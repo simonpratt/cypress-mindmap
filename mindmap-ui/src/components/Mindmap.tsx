@@ -1,7 +1,9 @@
 import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from 'react';
 import styled from 'styled-components';
-import { CANVAS_SCALE_FACTOR, MOUSE_MOVE_CLICK_THRESHOLD } from '../constants/render.constants';
-import { getTreeLayout, TreeNode } from '../helpers/getTreeLayout';
+import { CANVAS_SCALE_FACTOR, DEFAULT_FONT, MOUSE_MOVE_CLICK_THRESHOLD } from '../constants/render.constants';
+import { findTreeNodeAtCoordinate } from '../helpers/findTreeNodeAtCoordinate';
+import { getTreeAndToggleNodeCollapse } from '../helpers/getTreeAndToggleNodeCollapse';
+import { getTreeLayout, TreeNode, TreeNodeLayout } from '../helpers/getTreeLayout';
 import { getVisibleCanvasBounds } from '../helpers/getVisibleBounds';
 import { getWindowPointOnCanvas } from '../helpers/getWindowPointOnCanvas';
 import { renderGrid } from '../render/renderGrid';
@@ -56,6 +58,8 @@ const Mindmap = ({ json }: MindmapProps) => {
   // const canvasRef = useRef<HTMLCanvasElement>(null);
   const [context2D, setContext2D] = useState<CanvasRenderingContext2D>();
   const [canvas, setCanvas] = useState<HTMLCanvasElement>();
+  const [tree, setTree] = useState<TreeNode>();
+  const [treeLayout, setTreeLayout] = useState<TreeNodeLayout>();
   const mouseLastSeen = useRef<MouseCoords>();
   const mouseFirstSeen = useRef<MouseCoords>();
   const controlPressed = useRef<boolean>();
@@ -63,6 +67,14 @@ const Mindmap = ({ json }: MindmapProps) => {
 
   const [coords, dispatchPan] = useReducer(coordsReducer, { x: 0, y: 0 });
   const [zoom, dispatchZoom] = useReducer(zoomReducer, { val: 1 });
+
+  /**
+   * Whenever the JSON changes re-bind to the tree.
+   * This state is use so that elsewhere in the app we can change the tree state to trigger re-renderes
+   */
+  useEffect(() => {
+    setTree(json);
+  }, [json]);
 
   /**
    * Hook that is responsible for binding to the canvas element, setting initial size, and persisting to state
@@ -81,9 +93,41 @@ const Mindmap = ({ json }: MindmapProps) => {
     [setCanvas],
   );
 
+  /**
+   * Hook that is responsible for getting and configuring the 2d drawing instance
+   */
+  useEffect(() => {
+    // Get the context
+    const _context2D = canvas?.getContext('2d');
+
+    if (!_context2D) {
+      return;
+    }
+
+    // Configure the context
+    _context2D.font = DEFAULT_FONT;
+    _context2D.textBaseline = 'top';
+    _context2D.fillStyle = '#e2e2e2';
+
+    // Set to state
+    setContext2D(_context2D);
+  }, [canvas, setContext2D]);
+
+  /**
+   * Re-evaluate the tree layout whenever the tree or 2d canvas changes
+   */
+  useEffect(() => {
+    if (!context2D || !tree) {
+      return;
+    }
+
+    const _treeLayout = getTreeLayout(context2D, tree, 800, 32);
+    setTreeLayout(_treeLayout);
+  }, [tree, context2D, setTreeLayout]);
+
   const mouseUpHandler = useCallback(
     (e: MouseEvent) => {
-      if (!mouseFirstSeen.current || !context2D) {
+      if (!mouseFirstSeen.current || !context2D || !treeLayout || !tree) {
         return;
       }
 
@@ -95,9 +139,17 @@ const Mindmap = ({ json }: MindmapProps) => {
       }
 
       const point = getWindowPointOnCanvas(context2D, e.x, e.y);
-      context2D.fillRect(point.x, point.y, 10, 10);
+      const node = findTreeNodeAtCoordinate(point.x, point.y, treeLayout);
+
+      // If no node was clicked, then do nothing
+      if (!node) {
+        return;
+      }
+
+      const _updatedTree = getTreeAndToggleNodeCollapse(tree, node.id);
+      setTree(_updatedTree);
     },
-    [context2D],
+    [context2D, treeLayout, tree],
   );
 
   useEffect(() => {
@@ -161,37 +213,6 @@ const Mindmap = ({ json }: MindmapProps) => {
     });
   }, []);
 
-  /**
-   * Hook that is responsible for getting and configuring the 2d drawing instance
-   */
-  useEffect(() => {
-    // Get the context
-    const _context2D = canvas?.getContext('2d');
-
-    if (!_context2D) {
-      return;
-    }
-
-    // Configure the context
-    _context2D.font = '32px Roboto, sans-serif';
-    _context2D.textBaseline = 'top';
-    _context2D.fillStyle = '#e2e2e2';
-
-    // Set to state
-    setContext2D(_context2D);
-  }, [canvas, setContext2D]);
-
-  /**
-   * Re-evaluate the tree layout whenever the tree or 2d canvas changes
-   */
-  const treeLayout = useMemo(() => {
-    if (!context2D) {
-      return;
-    }
-
-    return getTreeLayout(context2D, json, 800, 32);
-  }, [json, context2D]);
-
   const handleWheel = useCallback(
     (e: WheelEvent) => {
       e.preventDefault();
@@ -252,7 +273,6 @@ const Mindmap = ({ json }: MindmapProps) => {
     renderGrid(context2D, visibleBounds.x, visibleBounds.y, visibleBounds.width, visibleBounds.height);
 
     // Draw the tree
-    context2D.fillStyle = '#e2e2e2';
     renderTree(context2D, treeLayout, 32);
   }, [context2D, coords, zoom, treeLayout]);
 

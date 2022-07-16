@@ -1,10 +1,17 @@
 import { ANCHOR_X_OFFSET, HORIZONTAL_SPACE_BETWEEN_BLOCKS } from '../constants/render.constants';
 import { TreeNodeLayout } from '../helpers/getTreeLayout';
+import { renderNodeCounter } from './renderNodeCounter';
 import { renderTextBlock } from './renderTextBlock';
 
 export const renderTree = (canvas2D: CanvasRenderingContext2D, node: TreeNodeLayout, fontSize: number) => {
   // Render the main node
   renderTextBlock(canvas2D, node.lines, node.x, node.y, fontSize);
+
+  // If this node is collapsed, we want to render a counter and no children
+  if (node.collapsed) {
+    renderNodeCounter(canvas2D, node);
+    return;
+  }
 
   // Render child nodes
   node.nodes.map((_node) => renderTree(canvas2D, _node, fontSize));

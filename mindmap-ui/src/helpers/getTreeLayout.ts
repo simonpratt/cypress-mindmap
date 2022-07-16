@@ -1,4 +1,5 @@
 import {
+  DEFAULT_FONT,
   HORIZONTAL_SPACE_BETWEEN_BLOCKS,
   TREE_BOUNDARY_PADDING,
   VERTICAL_SPACE_BETWEEN_BLOCKS,
@@ -7,6 +8,7 @@ import { getTextBlock } from './getTextBlock';
 import { measureTextBlock } from './measureTextBlock';
 
 export interface TreeNodeLayout {
+  id: string;
   lines: string[];
   nodes: TreeNodeLayout[];
   x: number;
@@ -15,45 +17,69 @@ export interface TreeNodeLayout {
   height: number;
   treeHeight: number;
   treeWidth: number;
+  collapsed: boolean;
+  leafCount: number;
 }
 
 export interface TreeNodeHeight {
+  id: string;
   lines: string[];
   nodes: TreeNodeHeight[];
   width: number;
   height: number;
   treeHeight: number;
   treeWidth: number;
+  collapsed: boolean;
+  leafCount: number;
 }
 
 export interface TreeNode {
+  id: string;
   text: string;
-  nodes?: TreeNode[];
+  nodes: TreeNode[];
+  collapsed?: boolean;
 }
 
 interface TreeNodeExtended {
+  id: string;
   lines: string[];
   nodes: TreeNodeExtended[];
   width: number;
   height: number;
+  collapsed: boolean;
+  leafCount: number;
 }
 
 const sum = (numbers: number[]): number => {
   return numbers.reduce((sum, curr) => sum + curr, 0);
 };
 
-const expandTreeToTextBlocks = (
+const getExtendedTreeInfo = (
   canvas2D: CanvasRenderingContext2D,
   node: TreeNode,
   maxWidth: number,
   fontSize: number,
 ): TreeNodeExtended => {
   const textBlock = getTextBlock(canvas2D, node.text, maxWidth);
+  const expandedNodes = node.nodes.map((node) => getExtendedTreeInfo(canvas2D, node, maxWidth, fontSize));
+
   return {
+    id: node.id,
     lines: textBlock,
     ...measureTextBlock(canvas2D, textBlock, fontSize),
-    nodes: node.nodes ? node.nodes.map((node) => expandTreeToTextBlocks(canvas2D, node, maxWidth, fontSize)) : [],
+    nodes: expandedNodes,
+    collapsed: node.collapsed ? true : false,
+    leafCount: (expandedNodes.length ? 0 : 1) + sum(expandedNodes.map((_node) => _node.leafCount)),
   };
+};
+
+const getFullInvisibleHeight = (canvas2D: CanvasRenderingContext2D, node: TreeNodeExtended): number => {
+  if (!node.nodes.length) {
+    return node.height;
+  }
+
+  const nodeHeights = node.nodes.map((_node) => getFullInvisibleHeight(canvas2D, _node));
+  return sum(nodeHeights) + (node.nodes.length - 1) * VERTICAL_SPACE_BETWEEN_BLOCKS;
 };
 
 const getNodeSizes = (canvas2D: CanvasRenderingContext2D, node: TreeNodeExtended): TreeNodeHeight => {
@@ -62,13 +88,24 @@ const getNodeSizes = (canvas2D: CanvasRenderingContext2D, node: TreeNodeExtended
     return {
       ...node,
       nodes: [],
-      treeHeight: node.height,
       treeWidth: node.width,
+      treeHeight: node.height,
     };
   }
 
   // Process child nodes first so that we know what the current nodes height will be
   const nodesWithHeight = node.nodes.map((_node) => getNodeSizes(canvas2D, _node));
+
+  // Special condition
+  // If the node is collapsed, we want to use just this nodes height
+  if (node.collapsed) {
+    return {
+      ...node,
+      nodes: nodesWithHeight,
+      treeWidth: node.width,
+      treeHeight: node.height,
+    };
+  }
 
   // Use the height of the child nodes to calculate what the current node height will be
   const treeHeight =
@@ -83,8 +120,8 @@ const getNodeSizes = (canvas2D: CanvasRenderingContext2D, node: TreeNodeExtended
   return {
     ...node,
     nodes: nodesWithHeight,
-    treeHeight,
     treeWidth,
+    treeHeight,
   };
 };
 
@@ -125,8 +162,13 @@ const getNodeLayout = (canvas2D: CanvasRenderingContext2D, node: TreeNodeHeight)
     treeHeight: node.treeHeight + TREE_BOUNDARY_PADDING * 2,
   };
 
+  // Get the full height of the tree including invisible nodes
+  // Use this full height when calcuating the position of the root node
+  // This keeps the tree in the same spot collapsing nodes
+  const fullTreeHeight = getFullInvisibleHeight(canvas2D, node);
+
   // Calculate position of the root node
-  const y = node.treeHeight / 2 - node.height / 2 + TREE_BOUNDARY_PADDING;
+  const y = fullTreeHeight / 2 - node.height / 2 + TREE_BOUNDARY_PADDING;
   const x = TREE_BOUNDARY_PADDING;
 
   // Set the Root node position and then the rest are set recursively
@@ -144,8 +186,11 @@ export const getTreeLayout = (
   maxWidth: number,
   fontSize: number,
 ): TreeNodeLayout => {
+  // Set to the default text size
+  canvas2D.font = DEFAULT_FONT;
+
   // Iterate over all nodes in the tree, split into lines, and calculate the width + height of each text block
-  const expanded = expandTreeToTextBlocks(canvas2D, node, maxWidth, fontSize);
+  const expanded = getExtendedTreeInfo(canvas2D, node, maxWidth, fontSize);
 
   // First calculate all the tree heights of nodes
   const withHeight = getNodeSizes(canvas2D, expanded);
