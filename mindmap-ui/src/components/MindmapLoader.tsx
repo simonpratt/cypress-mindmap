@@ -47,6 +47,21 @@ const sample_nodes: TreeNodePartial = {
   ],
 };
 
+// const sample_nodes: TreeNodePartial = {
+//   text: 'Mindmap',
+//   nodes: [
+//     {
+//       text: 'Canvas',
+//       nodes: [
+//         {
+//           text: 'Lots of node trees. There really are lots of trees that need lots and lots of maths. More than you would expect. It even needs to wrap lots and lots of lines of text without looking funny',
+//           nodes: [],
+//         },
+//       ],
+//     },
+//   ],
+// };
+
 const parseTestStructureToNodeTree = (tree: TestStructure): TreeNodePartial => {
   const testNodes = tree.tests.map((test) => ({
     text: test,

@@ -1,9 +1,10 @@
-import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from 'react';
+import { useCallback, useEffect, useReducer, useRef, useState } from 'react';
 import styled from 'styled-components';
 import { CANVAS_SCALE_FACTOR, DEFAULT_FONT, MOUSE_MOVE_CLICK_THRESHOLD } from '../constants/render.constants';
 import { findTreeNodeAtCoordinate } from '../helpers/findTreeNodeAtCoordinate';
 import { getTreeAndToggleNodeCollapse } from '../helpers/getTreeAndToggleNodeCollapse';
 import { getTreeLayout, TreeNode, TreeNodeLayout } from '../helpers/getTreeLayout';
+import { getTreeWithSearchTextFilter } from '../helpers/getTreeWithSearchTextFilter';
 import { getVisibleCanvasBounds } from '../helpers/getVisibleBounds';
 import { getWindowPointOnCanvas } from '../helpers/getWindowPointOnCanvas';
 import { renderGrid } from '../render/renderGrid';
@@ -60,6 +61,7 @@ const Mindmap = ({ json }: MindmapProps) => {
   const [canvas, setCanvas] = useState<HTMLCanvasElement>();
   const [tree, setTree] = useState<TreeNode>();
   const [treeLayout, setTreeLayout] = useState<TreeNodeLayout>();
+  const [searchValue, setSearchValue] = useState('');
   const mouseLastSeen = useRef<MouseCoords>();
   const mouseFirstSeen = useRef<MouseCoords>();
   const controlPressed = useRef<boolean>();
@@ -74,7 +76,12 @@ const Mindmap = ({ json }: MindmapProps) => {
    */
   useEffect(() => {
     setTree(json);
-  }, [json]);
+  }, [json, setTree]);
+
+  useEffect(() => {
+    const pruned = getTreeWithSearchTextFilter(json, searchValue);
+    setTree(pruned);
+  }, [searchValue, setTree]);
 
   /**
    * Hook that is responsible for binding to the canvas element, setting initial size, and persisting to state
@@ -279,9 +286,9 @@ const Mindmap = ({ json }: MindmapProps) => {
   return (
     <FilledDiv>
       <FillCanvas ref={canvasRef} />
-      {/* <InputContainer>
-        <Input value='test' onChange={() => {}} />
-      </InputContainer> */}
+      <InputContainer>
+        <Input value={searchValue} onChange={setSearchValue} placeholder='Search for nodes' />
+      </InputContainer>
     </FilledDiv>
   );
 };
