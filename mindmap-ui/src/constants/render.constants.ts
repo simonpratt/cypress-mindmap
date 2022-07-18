@@ -7,6 +7,7 @@ export const GRID_SPACING_Y = 120;
 export const TREE_BOUNDARY_PADDING = 10;
 export const CANVAS_SCALE_FACTOR = 2;
 export const MOUSE_MOVE_CLICK_THRESHOLD = 4;
+export const BLOCK_NODE_PADDING = 8;
 
 export const DEFAULT_FONT_SIZE = 32;
 export const SMALL_FONT_SIZE = 24;

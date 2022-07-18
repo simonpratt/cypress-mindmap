@@ -52,11 +52,12 @@ const renderTextHighlightForLine = (
   });
 };
 
-export const renderTextBlock = (
+export const renderText = (
   canvas2D: CanvasRenderingContext2D,
   lines: string[],
   x: number,
   y: number,
+  colour: string,
   searchTerm?: string,
 ) => {
   // Set the font
@@ -70,7 +71,7 @@ export const renderTextBlock = (
     renderTextHighlightForLine(canvas2D, line, x, yTotal, searchTerm);
 
     // Render the font
-    canvas2D.fillStyle = '#e2e2e2';
+    canvas2D.fillStyle = colour;
     canvas2D.fillText(line, x, yTotal);
   });
 };

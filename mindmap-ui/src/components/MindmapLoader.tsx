@@ -13,10 +13,12 @@ interface TestStructure {
 interface TreeNodePartial {
   text: string;
   nodes: TreeNodePartial[];
+  blockNode?: boolean;
 }
 
 const sample_nodes: TreeNodePartial = {
   text: 'Mindmap',
+  blockNode: true,
   nodes: [
     {
       text: 'Canvas',
@@ -62,16 +64,17 @@ const sample_nodes: TreeNodePartial = {
 //   ],
 // };
 
-const parseTestStructureToNodeTree = (tree: TestStructure): TreeNodePartial => {
+const parseTestStructureToNodeTree = (tree: TestStructure, isRoot = true): TreeNodePartial => {
   const testNodes = tree.tests.map((test) => ({
     text: test,
     nodes: [],
   }));
-  const nestedNodes = tree.nested.map((nested) => parseTestStructureToNodeTree(nested));
+  const nestedNodes = tree.nested.map((nested) => parseTestStructureToNodeTree(nested, false));
 
   return {
     text: tree.describe,
     nodes: [...testNodes, ...nestedNodes],
+    blockNode: !!isRoot,
   };
 };
 

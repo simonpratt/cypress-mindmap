@@ -1,11 +1,19 @@
-import { ANCHOR_X_OFFSET, HORIZONTAL_SPACE_BETWEEN_BLOCKS } from '../constants/render.constants';
+import { ANCHOR_X_OFFSET, BLOCK_NODE_PADDING, HORIZONTAL_SPACE_BETWEEN_BLOCKS } from '../constants/render.constants';
 import { TreeNodeLayout } from '../helpers/getTreeLayout';
 import { renderNodeCounter } from './renderNodeCounter';
-import { renderTextBlock } from './renderTextBlock';
+import { renderRounderRect } from './renderRoundedRect';
+import { renderText } from './renderText';
 
 export const renderTree = (canvas2D: CanvasRenderingContext2D, node: TreeNodeLayout, searchTerm: string) => {
+  // If we're at a block node, render the block and adjust coords
+  const nodeX = node.blockNode ? node.x + BLOCK_NODE_PADDING : node.x;
+  const nodeY = node.blockNode ? node.y + BLOCK_NODE_PADDING : node.y;
+  if (node.blockNode) {
+    renderRounderRect(canvas2D, node.x, node.y + 3, node.width, node.height, 10, '#e2e2e2');
+  }
+
   // Render the main node
-  renderTextBlock(canvas2D, node.lines, node.x, node.y, searchTerm);
+  renderText(canvas2D, node.lines, nodeX, nodeY, node.blockNode ? '191919' : '#e2e2e2', searchTerm);
 
   // If this node is collapsed, we want to render a counter and no children
   if (node.collapsed) {

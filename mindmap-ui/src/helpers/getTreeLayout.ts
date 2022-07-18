@@ -1,4 +1,5 @@
 import {
+  BLOCK_NODE_PADDING,
   DEFAULT_FONT,
   HORIZONTAL_SPACE_BETWEEN_BLOCKS,
   TREE_BOUNDARY_PADDING,
@@ -19,6 +20,7 @@ export interface TreeNodeLayout {
   treeWidth: number;
   collapsed: boolean;
   leafCount: number;
+  blockNode: boolean;
 }
 
 export interface TreeNodeHeight {
@@ -31,6 +33,7 @@ export interface TreeNodeHeight {
   treeWidth: number;
   collapsed: boolean;
   leafCount: number;
+  blockNode: boolean;
 }
 
 export interface TreeNode {
@@ -38,6 +41,7 @@ export interface TreeNode {
   text: string;
   nodes: TreeNode[];
   collapsed?: boolean;
+  blockNode?: boolean;
 }
 
 interface TreeNodeExtended {
@@ -48,6 +52,7 @@ interface TreeNodeExtended {
   height: number;
   collapsed: boolean;
   leafCount: number;
+  blockNode: boolean;
 }
 
 const sum = (numbers: number[]): number => {
@@ -63,13 +68,16 @@ const getExtendedTreeInfo = (
   const textBlock = getTextBlock(canvas2D, node.text, maxWidth);
   const expandedNodes = node.nodes.map((node) => getExtendedTreeInfo(canvas2D, node, maxWidth, fontSize));
 
+  const size = measureTextBlock(canvas2D, textBlock, fontSize);
   return {
     id: node.id,
     lines: textBlock,
-    ...measureTextBlock(canvas2D, textBlock, fontSize),
+    width: node.blockNode ? size.width + BLOCK_NODE_PADDING * 2 : size.width,
+    height: node.blockNode ? size.height + BLOCK_NODE_PADDING * 2 : size.height,
     nodes: expandedNodes,
     collapsed: node.collapsed ? true : false,
     leafCount: (expandedNodes.length ? 0 : 1) + sum(expandedNodes.map((_node) => _node.leafCount)),
+    blockNode: !!node.blockNode,
   };
 };
 
