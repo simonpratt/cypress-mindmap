@@ -280,8 +280,8 @@ const Mindmap = ({ json }: MindmapProps) => {
     renderGrid(context2D, visibleBounds.x, visibleBounds.y, visibleBounds.width, visibleBounds.height);
 
     // Draw the tree
-    renderTree(context2D, treeLayout, 32);
-  }, [context2D, coords, zoom, treeLayout]);
+    renderTree(context2D, treeLayout, searchValue);
+  }, [context2D, coords, zoom, treeLayout, searchValue]);
 
   return (
     <FilledDiv>

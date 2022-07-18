@@ -3,9 +3,9 @@ import { TreeNodeLayout } from '../helpers/getTreeLayout';
 import { renderNodeCounter } from './renderNodeCounter';
 import { renderTextBlock } from './renderTextBlock';
 
-export const renderTree = (canvas2D: CanvasRenderingContext2D, node: TreeNodeLayout, fontSize: number) => {
+export const renderTree = (canvas2D: CanvasRenderingContext2D, node: TreeNodeLayout, searchTerm: string) => {
   // Render the main node
-  renderTextBlock(canvas2D, node.lines, node.x, node.y, fontSize);
+  renderTextBlock(canvas2D, node.lines, node.x, node.y, searchTerm);
 
   // If this node is collapsed, we want to render a counter and no children
   if (node.collapsed) {
@@ -14,7 +14,7 @@ export const renderTree = (canvas2D: CanvasRenderingContext2D, node: TreeNodeLay
   }
 
   // Render child nodes
-  node.nodes.map((_node) => renderTree(canvas2D, _node, fontSize));
+  node.nodes.map((_node) => renderTree(canvas2D, _node, searchTerm));
 
   // Define the anchor point for lines
   const currentAnchor = {
