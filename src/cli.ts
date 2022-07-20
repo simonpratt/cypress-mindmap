@@ -87,9 +87,11 @@ const getExpressionBodyNodes = (node: Statement): Statement[] => {
 
 const unwindDescribeBlock = (node: Statement): TestStructure => {
   return {
-    describe: getFirstArgumentValue(node),
+    describe: getFirstArgumentValue(node).toLowerCase(),
     nested: getExpressionBodyNodes(node).filter(isDescribeNode).map(unwindDescribeBlock),
-    tests: getExpressionBodyNodes(node).filter(isItNode).map(getFirstArgumentValue),
+    tests: getExpressionBodyNodes(node)
+      .filter(isItNode)
+      .map((node) => getFirstArgumentValue(node).toLowerCase()),
   };
 };
 
