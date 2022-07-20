@@ -64,17 +64,16 @@ const sample_nodes: TreeNodePartial = {
 //   ],
 // };
 
-const parseTestStructureToNodeTree = (tree: TestStructure, isRoot = true): TreeNodePartial => {
+const parseTestStructureToNodeTree = (tree: TestStructure): TreeNodePartial => {
   const testNodes = tree.tests.map((test) => ({
     text: test,
     nodes: [],
   }));
-  const nestedNodes = tree.nested.map((nested) => parseTestStructureToNodeTree(nested, false));
+  const nestedNodes = tree.nested.map((nested) => parseTestStructureToNodeTree(nested));
 
   return {
     text: tree.describe,
     nodes: [...testNodes, ...nestedNodes],
-    blockNode: !!isRoot,
   };
 };
 
@@ -100,6 +99,7 @@ const MindmapLoader = () => {
 
   const nodes = {
     text: 'root',
+    blockNode: true,
     nodes: result?.data.map((_data: TestStructure) => parseTestStructureToNodeTree(_data)),
   };
 
