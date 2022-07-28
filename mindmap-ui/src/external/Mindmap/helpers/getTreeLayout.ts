@@ -10,6 +10,7 @@ import { measureTextBlock } from './measureTextBlock';
 
 export interface TreeNodeLayout {
   id: string;
+  text: string;
   lines: string[];
   nodes: TreeNodeLayout[];
   x: number;
@@ -25,6 +26,7 @@ export interface TreeNodeLayout {
 
 export interface TreeNodeHeight {
   id: string;
+  text: string;
   lines: string[];
   nodes: TreeNodeHeight[];
   width: number;
@@ -46,6 +48,7 @@ export interface TreeNode {
 
 interface TreeNodeExtended {
   id: string;
+  text: string;
   lines: string[];
   nodes: TreeNodeExtended[];
   width: number;
@@ -70,7 +73,9 @@ const getExtendedTreeInfo = (
 
   const size = measureTextBlock(canvas2D, textBlock, fontSize);
   return {
+    ...node,
     id: node.id,
+    text: node.text,
     lines: textBlock,
     width: node.blockNode ? size.width + BLOCK_NODE_PADDING * 2 : size.width,
     height: node.blockNode ? size.height + BLOCK_NODE_PADDING * 2 : size.height,

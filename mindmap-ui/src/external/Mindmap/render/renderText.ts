@@ -14,7 +14,6 @@ const renderTextHighlightForLine = (
 
   // Split based on search term - this will give us lowercase matches
   const lineSplit = line.toLowerCase().split(searchTerm.toLowerCase());
-  console.log(lineSplit);
 
   // If the length is one, then there is no matches
   if (lineSplit.length === 1) {
