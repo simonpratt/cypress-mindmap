@@ -1,4 +1,10 @@
 
+## About
+
+cypress-mindmap is a CLI utility designed to help you understand your cypress test suite coverage. It does this by extracting the test structure and test cases from your test files and visualising them in a mindmap.
+
+![Functionality Screenshot](/screenshots/readme-01.png)
+
 ## Getting started
 
 First install the pacakge globally to allow for usage in any of your repos
